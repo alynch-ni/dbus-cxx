@@ -7,7 +7,8 @@ link_directories( ${CMAKE_BINARY_DIR} )
 include_directories( ${CMAKE_SOURCE_DIR}/dbus-cxx
     ${CMAKE_BINARY_DIR}/dbus-cxx 
     ${dbus_INCLUDE_DIRS} 
-    ${sigc_INCLUDE_DIRS} )
+    ${sigc_INCLUDE_DIRS}
+    ${expat_INCLUDE_DIRS} )
 
 if( ENABLE_ROBUSTNESS_TESTS )
     add_subdirectory( robustness-tests )
@@ -91,7 +92,6 @@ add_test( NAME messageiterator-multiple-2 COMMAND test-messageiterator multiple-
 add_test( NAME messageiterator-struct-2 COMMAND test-messageiterator struct-2)
 add_test( NAME messageiterator-variant-2 COMMAND test-messageiterator variant-2)
 
-
 add_executable( test-path pathclasstests.cpp )
 target_link_libraries( test-path ${TEST_LINK} )
 target_include_directories( test-path PUBLIC ${CMAKE_SOURCE_DIR} )
@@ -116,106 +116,6 @@ add_test( NAME path-append-invalid-empty COMMAND test-path append_invalid_empty)
 add_test( NAME path-append-invalid-chars COMMAND test-path append_invalid_empty)
 add_test( NAME path-append-invalid-double_slash COMMAND test-path append_invalid_double_slash)
 add_test( NAME path-append-invalid-root COMMAND test-path append_invalid_root)
-
-add_executable( test-connection connectiontests.cpp )
-target_link_libraries( test-connection ${TEST_LINK} )
-target_include_directories( test-connection PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( test-connection PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET test-connection PROPERTY CXX_STANDARD 17 )
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper.sh COPYONLY)
-add_test( NAME connection-proxy-create1 COMMAND dbus-wrapper.sh test-connection create_signal_proxy)
-add_test( NAME connection-proxy-get-iface COMMAND dbus-wrapper.sh test-connection get_signal_proxy_by_iface)
-add_test( NAME connection-proxy-get-iface-name COMMAND dbus-wrapper.sh test-connection get_signal_proxy_by_iface_and_name)
-add_test( NAME connection-proxy-create_signal COMMAND dbus-wrapper.sh test-connection create_void_signal)
-add_test( NAME connection-proxy-create_int_signal COMMAND dbus-wrapper.sh test-connection create_int_signal)
-
-#
-# Object Tests
-#
-add_executable( object-tests objecttests.cpp )
-target_link_libraries( object-tests ${TEST_LINK} )
-target_include_directories( object-tests PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( object-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET object-tests PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME create-object-proxy COMMAND dbus-wrapper.sh object-tests proxy_create)
-add_test( NAME object-proxy-create-method COMMAND dbus-wrapper.sh object-tests proxy_create_method1)
-add_test( NAME export-method COMMAND dbus-wrapper.sh object-tests export_method)
-
-#
-# Data Sending tests - make sure we can actually send data across the bus correctly
-#
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-data-tests.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-data-tests.sh COPYONLY)
-add_executable( data-tests datatests.cpp custom-type.cpp )
-target_link_libraries( data-tests ${TEST_LINK} )
-target_include_directories( data-tests PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( data-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET data-tests PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME send-integers COMMAND dbus-wrapper-data-tests.sh send_integers)
-add_test( NAME call-void-method COMMAND dbus-wrapper-data-tests.sh void_method)
-add_test( NAME call-void-custom-method COMMAND dbus-wrapper-data-tests.sh void_custom)
-add_test( NAME call-int-custom-method COMMAND dbus-wrapper-data-tests.sh send_intcustom)
-add_test( NAME test-ping-method COMMAND dbus-wrapper-data-tests.sh ping)
-add_test( NAME test-machine-uuid-method COMMAND dbus-wrapper-data-tests.sh machine_uuid)
-add_test( NAME tuple-sending COMMAND dbus-wrapper-data-tests.sh tuple)
-add_test( NAME variant-array COMMAND dbus-wrapper-data-tests.sh variant_array)
-add_test( NAME variant-map COMMAND dbus-wrapper-data-tests.sh variant_map)
-add_test( NAME variant-tuple COMMAND dbus-wrapper-data-tests.sh variant_tuple)
-add_test( NAME nonexistant-method COMMAND dbus-wrapper-data-tests.sh nonexistant_method )
-add_test( NAME multiplereturn COMMAND dbus-wrapper-data-tests.sh send_multiplereturn )
-add_test( NAME multiplereturn2 COMMAND dbus-wrapper-data-tests.sh send_multiplereturn2 )
-add_test( NAME send-complex COMMAND dbus-wrapper-data-tests.sh send_complex )
-
-#
-# Signal tests - make sure we can tx and rx singals correctly
-#
-add_executable( signal-tests signaltests.cpp )
-target_link_libraries( signal-tests ${TEST_LINK} )
-target_include_directories( signal-tests PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( signal-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET signal-tests PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME create-signal COMMAND dbus-wrapper.sh signal-tests create)
-add_test( NAME signal-tx-rx COMMAND dbus-wrapper.sh signal-tests tx_rx)
-add_test( NAME void-signal-tx-rx COMMAND dbus-wrapper.sh signal-tests void_txrx)
-add_test( NAME path-match-rx COMMAND dbus-wrapper.sh signal-tests path_match_only)
-add_test( NAME interface-match-rx COMMAND dbus-wrapper.sh signal-tests interface_match_only)
-add_test( NAME member-match-rx COMMAND dbus-wrapper.sh signal-tests member_match_only)
-add_test( NAME multiple-handlers COMMAND dbus-wrapper.sh signal-tests multiple_handlers)
-add_test( NAME remove-handler COMMAND dbus-wrapper.sh signal-tests remove_handler)
-
-#
-# Introspection Tests - make sure that we can introspect and get the correct data back
-#
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-introspection-tests.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-introspection-tests.sh COPYONLY)
-add_executable( introspection-tests introspection-test.cpp )
-target_link_libraries( introspection-tests ${TEST_LINK} ${expat_LDFLAGS} )
-target_include_directories( introspection-tests PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( introspection-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET introspection-tests PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME basic-introspect COMMAND dbus-wrapper-introspection-tests.sh basic_introspect)
-add_test( NAME validate-xml COMMAND dbus-wrapper-introspection-tests.sh valid_xml)
-add_test( NAME validate-interfaces COMMAND dbus-wrapper-introspection-tests.sh validate_interfaces)
-add_test( NAME add-method-found COMMAND dbus-wrapper-introspection-tests.sh add_method_under_foowhat)
-add_test( NAME first-argname-correct COMMAND dbus-wrapper-introspection-tests.sh first_argname_correct)
-add_test( NAME second-argname-correct COMMAND dbus-wrapper-introspection-tests.sh second_argname_correct)
-add_test( NAME signal-found COMMAND dbus-wrapper-introspection-tests.sh signal_found)
-add_test( NAME multi-return COMMAND dbus-wrapper-introspection-tests.sh multiple_return)
-
-#
-# Custom DBus address test - make sure that we can connect to an arbitary bus, not just the default session bus
-#
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-customaddress.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-customaddress.sh COPYONLY)
-add_executable( customaddress-tests customaddress-test.cpp )
-target_link_libraries( customaddress-tests ${TEST_LINK} )
-target_include_directories( customaddress-tests PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( customaddress-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET customaddress-tests PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME custom-address COMMAND dbus-wrapper-customaddress.sh customaddress-tests)
 
 #
 # Signature tests - make sure that given a signature, we can validate it and iterate over it
@@ -256,6 +156,63 @@ add_test( NAME two-section-busname COMMAND test-validation two_section_bus_name)
 add_test( NAME three-section-busname COMMAND test-validation three_section_bus_name)
 
 #
+# Ensure that unset environment variables don't cause problems
+#
+add_executable( test-unset-envvars unset-envvars.cpp )
+target_link_libraries( test-unset-envvars ${TEST_LINK} )
+target_include_directories( test-unset-envvars PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( test-unset-envvars PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET test-unset-envvars PROPERTY CXX_STANDARD 17 )
+
+add_test( NAME unset-session-bus COMMAND test-unset-envvars connect_session_bus )
+add_test( NAME unset-starter-bus COMMAND test-unset-envvars connect_starter_bus )
+
+#
+# Connection Tests
+#
+add_executable( test-connection connectiontests.cpp )
+target_link_libraries( test-connection ${TEST_LINK} )
+target_include_directories( test-connection PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( test-connection PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET test-connection PROPERTY CXX_STANDARD 17 )
+
+#
+# Object Tests
+#
+add_executable( object-tests objecttests.cpp )
+target_link_libraries( object-tests ${TEST_LINK} )
+target_include_directories( object-tests PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( object-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET object-tests PROPERTY CXX_STANDARD 17 )
+
+#
+# Data Sending tests - make sure we can actually send data across the bus correctly
+#
+add_executable( data-tests datatests.cpp custom-type.cpp )
+target_link_libraries( data-tests ${TEST_LINK} )
+target_include_directories( data-tests PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( data-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET data-tests PROPERTY CXX_STANDARD 17 )
+
+#
+# Signal tests - make sure we can tx and rx singals correctly
+#
+add_executable( signal-tests signaltests.cpp )
+target_link_libraries( signal-tests ${TEST_LINK} )
+target_include_directories( signal-tests PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( signal-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET signal-tests PROPERTY CXX_STANDARD 17 )
+
+#
+# Introspection Tests - make sure that we can introspect and get the correct data back
+#
+add_executable( introspection-tests introspection-test.cpp )
+target_link_libraries( introspection-tests ${TEST_LINK} ${expat_LDFLAGS} )
+target_include_directories( introspection-tests PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( introspection-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET introspection-tests PROPERTY CXX_STANDARD 17 )
+
+#
 # Thread affinity tests - make sure that when we define what thread we want to be
 #  called from, it calls it from the correct thread
 #
@@ -265,11 +222,129 @@ target_include_directories( test-affinity PUBLIC ${CMAKE_SOURCE_DIR} )
 target_include_directories( test-affinity PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
 set_property( TARGET test-affinity PROPERTY CXX_STANDARD 17 )
 
+#
+# Recursive tests - make sure that calling another DBus method inside of a current DBus method doesn't lockup
+#
+add_executable( test-recursive recursive-test.cpp )
+target_link_libraries( test-recursive ${TEST_LINK} )
+target_include_directories( test-recursive PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( test-recursive PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET test-recursive PROPERTY CXX_STANDARD 17 )
+
+add_executable( test-recursive-signal recursive-signal-test.cpp )
+target_link_libraries( test-recursive-signal ${TEST_LINK} )
+target_include_directories( test-recursive-signal PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( test-recursive-signal PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET test-recursive-signal PROPERTY CXX_STANDARD 17 )
+
+#
+# Property tests - test that we can get/set properties, as well as getting signals
+#
+add_executable( test-property property-test.cpp )
+target_link_libraries( test-property ${TEST_LINK} )
+target_include_directories( test-property PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( test-property PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET test-property PROPERTY CXX_STANDARD 17 )
+
+if( UNIX )
+
+#
+# Connection Tests
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper.sh COPYONLY)
+add_test( NAME connection-proxy-create1 COMMAND dbus-wrapper.sh test-connection create_signal_proxy)
+add_test( NAME connection-proxy-get-iface COMMAND dbus-wrapper.sh test-connection get_signal_proxy_by_iface)
+add_test( NAME connection-proxy-get-iface-name COMMAND dbus-wrapper.sh test-connection get_signal_proxy_by_iface_and_name)
+add_test( NAME connection-proxy-create_signal COMMAND dbus-wrapper.sh test-connection create_void_signal)
+add_test( NAME connection-proxy-create_int_signal COMMAND dbus-wrapper.sh test-connection create_int_signal)
+
+#
+# Object Tests
+#
+add_test( NAME create-object-proxy COMMAND dbus-wrapper.sh object-tests proxy_create)
+add_test( NAME object-proxy-create-method COMMAND dbus-wrapper.sh object-tests proxy_create_method1)
+add_test( NAME export-method COMMAND dbus-wrapper.sh object-tests export_method)
+
+#
+# Data Sending tests - make sure we can actually send data across the bus correctly
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-data-tests.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-data-tests.sh COPYONLY)
+add_test( NAME send-integers COMMAND dbus-wrapper-data-tests.sh send_integers)
+add_test( NAME call-void-method COMMAND dbus-wrapper-data-tests.sh void_method)
+add_test( NAME call-void-custom-method COMMAND dbus-wrapper-data-tests.sh void_custom)
+add_test( NAME call-int-custom-method COMMAND dbus-wrapper-data-tests.sh send_intcustom)
+add_test( NAME test-ping-method COMMAND dbus-wrapper-data-tests.sh ping)
+add_test( NAME test-machine-uuid-method COMMAND dbus-wrapper-data-tests.sh machine_uuid)
+add_test( NAME tuple-sending COMMAND dbus-wrapper-data-tests.sh tuple)
+add_test( NAME variant-array COMMAND dbus-wrapper-data-tests.sh variant_array)
+add_test( NAME variant-map COMMAND dbus-wrapper-data-tests.sh variant_map)
+add_test( NAME variant-tuple COMMAND dbus-wrapper-data-tests.sh variant_tuple)
+add_test( NAME nonexistant-method COMMAND dbus-wrapper-data-tests.sh nonexistant_method )
+add_test( NAME multiplereturn COMMAND dbus-wrapper-data-tests.sh send_multiplereturn )
+add_test( NAME multiplereturn2 COMMAND dbus-wrapper-data-tests.sh send_multiplereturn2 )
+add_test( NAME send-complex COMMAND dbus-wrapper-data-tests.sh send_complex )
+
+#
+# Signal tests - make sure we can tx and rx singals correctly
+#
+add_test( NAME create-signal COMMAND dbus-wrapper.sh signal-tests create)
+add_test( NAME signal-tx-rx COMMAND dbus-wrapper.sh signal-tests tx_rx)
+add_test( NAME void-signal-tx-rx COMMAND dbus-wrapper.sh signal-tests void_txrx)
+add_test( NAME path-match-rx COMMAND dbus-wrapper.sh signal-tests path_match_only)
+add_test( NAME interface-match-rx COMMAND dbus-wrapper.sh signal-tests interface_match_only)
+add_test( NAME member-match-rx COMMAND dbus-wrapper.sh signal-tests member_match_only)
+add_test( NAME multiple-handlers COMMAND dbus-wrapper.sh signal-tests multiple_handlers)
+add_test( NAME remove-handler COMMAND dbus-wrapper.sh signal-tests remove_handler)
+
+#
+# Introspection Tests - make sure that we can introspect and get the correct data back
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-introspection-tests.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-introspection-tests.sh COPYONLY)
+add_test( NAME basic-introspect COMMAND dbus-wrapper-introspection-tests.sh basic_introspect)
+add_test( NAME validate-xml COMMAND dbus-wrapper-introspection-tests.sh valid_xml)
+add_test( NAME validate-interfaces COMMAND dbus-wrapper-introspection-tests.sh validate_interfaces)
+add_test( NAME add-method-found COMMAND dbus-wrapper-introspection-tests.sh add_method_under_foowhat)
+add_test( NAME first-argname-correct COMMAND dbus-wrapper-introspection-tests.sh first_argname_correct)
+add_test( NAME second-argname-correct COMMAND dbus-wrapper-introspection-tests.sh second_argname_correct)
+add_test( NAME signal-found COMMAND dbus-wrapper-introspection-tests.sh signal_found)
+add_test( NAME multi-return COMMAND dbus-wrapper-introspection-tests.sh multiple_return)
+
+#
+# Thread affinity tests - make sure that when we define what thread we want to be
+#  called from, it calls it from the correct thread
+#
 add_test( NAME affinity-signal-dispatcher-thread COMMAND dbus-run-session ./test-affinity signal_dispatcher_thread)
 add_test( NAME affinity-signal-main-thread COMMAND dbus-run-session ./test-affinity signal_main_thread)
 add_test( NAME affinity-message-dispatcher-thread COMMAND dbus-run-session ./test-affinity message_dispatch_thread)
 add_test( NAME affinity-message-main-thread COMMAND dbus-run-session ./test-affinity message_main_thread)
 add_test( NAME affinity-message-change-thread COMMAND dbus-run-session ./test-affinity message_change_thread)
+
+#
+# Recursive tests - make sure that calling another DBus method inside of a current DBus method doesn't lockup
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-recursive.sh
+    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-recursive.sh COPYONLY)
+add_test( NAME recursive-method-call COMMAND dbus-wrapper-recursive.sh test)
+
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-recursive-signal.sh
+    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-recursive-signal.sh COPYONLY)
+add_test( NAME recursive-from-signal COMMAND dbus-wrapper-recursive-signal.sh test)
+
+#
+# Property tests - test that we can get/set properties, as well as getting signals
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-property-tests.sh
+    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-property-tests.sh COPYONLY)
+add_test( NAME property-get-all COMMAND dbus-wrapper-property-tests.sh get_all )
+add_test( NAME property-get-valid COMMAND dbus-wrapper-property-tests.sh get_valid )
+add_test( NAME property-set-valid COMMAND dbus-wrapper-property-tests.sh set_valid )
+add_test( NAME property-set-invalid COMMAND dbus-wrapper-property-tests.sh set_invalid )
+add_test( NAME property-set-readonly COMMAND dbus-wrapper-property-tests.sh set_readonly )
+add_test( NAME property-signal-emitted COMMAND dbus-wrapper-property-tests.sh signal_emitted )
+
+#
+# UNIX Only Tests
+#
 
 #
 # File Descriptor tests - make sure that we can send and receive file descriptors correctly
@@ -286,54 +361,112 @@ add_test( NAME filedescriptor-send COMMAND dbus-wrapper-fd-tests.sh send)
 add_test( NAME filedescriptor-receive COMMAND dbus-wrapper-fd-tests.sh get)
 
 #
+# Custom DBus address test - make sure that we can connect to an arbitary bus, not just the default session bus
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-customaddress.sh ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-customaddress.sh COPYONLY)
+add_executable( customaddress-tests customaddress-test.cpp )
+target_link_libraries( customaddress-tests ${TEST_LINK} )
+target_include_directories( customaddress-tests PUBLIC ${CMAKE_SOURCE_DIR} )
+target_include_directories( customaddress-tests PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
+set_property( TARGET customaddress-tests PROPERTY CXX_STANDARD 17 )
+
+add_test( NAME custom-address COMMAND dbus-wrapper-customaddress.sh customaddress-tests)
+
+endif( UNIX )
+
+if( WIN32 AND DEFINED ENV{DBUS_SESSION_BUS_ADDRESS} )
+
+#
+# Connection Tests
+#
+add_test( NAME connection-proxy-create1 COMMAND test-connection create_signal_proxy)
+add_test( NAME connection-proxy-get-iface COMMAND test-connection get_signal_proxy_by_iface)
+add_test( NAME connection-proxy-get-iface-name COMMAND test-connection get_signal_proxy_by_iface_and_name)
+add_test( NAME connection-proxy-create_signal COMMAND test-connection create_void_signal)
+add_test( NAME connection-proxy-create_int_signal COMMAND test-connection create_int_signal)
+
+#
+# Object Tests
+#
+add_test( NAME create-object-proxy COMMAND object-tests proxy_create)
+add_test( NAME object-proxy-create-method COMMAND object-tests proxy_create_method1)
+add_test( NAME export-method COMMAND object-tests export_method)
+
+#
+# Data Sending tests - make sure we can actually send data across the bus correctly
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/data-tests.bat ${CMAKE_CURRENT_BINARY_DIR}/data-tests.bat COPYONLY)
+add_test( NAME send-integers COMMAND data-tests.bat send_integers)
+add_test( NAME call-void-method COMMAND data-tests.bat void_method)
+add_test( NAME call-void-custom-method COMMAND data-tests.bat void_custom)
+add_test( NAME call-int-custom-method COMMAND data-tests.bat send_intcustom)
+add_test( NAME test-ping-method COMMAND data-tests.bat ping)
+add_test( NAME test-machine-uuid-method COMMAND data-tests.bat machine_uuid)
+add_test( NAME tuple-sending COMMAND data-tests.bat tuple)
+add_test( NAME variant-array COMMAND data-tests.bat variant_array)
+add_test( NAME variant-map COMMAND data-tests.bat variant_map)
+add_test( NAME variant-tuple COMMAND data-tests.bat variant_tuple)
+add_test( NAME nonexistant-method COMMAND data-tests.bat nonexistant_method )
+add_test( NAME multiplereturn COMMAND data-tests.bat send_multiplereturn )
+add_test( NAME multiplereturn2 COMMAND data-tests.bat send_multiplereturn2 )
+add_test( NAME send-complex COMMAND data-tests.bat send_complex )
+
+#
+# Signal tests - make sure we can tx and rx singals correctly
+#
+add_test( NAME create-signal COMMAND signal-tests create)
+add_test( NAME signal-tx-rx COMMAND signal-tests tx_rx)
+add_test( NAME void-signal-tx-rx COMMAND signal-tests void_txrx)
+add_test( NAME path-match-rx COMMAND signal-tests path_match_only)
+add_test( NAME interface-match-rx COMMAND signal-tests interface_match_only)
+add_test( NAME member-match-rx COMMAND signal-tests member_match_only)
+add_test( NAME multiple-handlers COMMAND signal-tests multiple_handlers)
+add_test( NAME remove-handler COMMAND signal-tests remove_handler)
+
+#
+# Introspection Tests - make sure that we can introspect and get the correct data back
+#
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/introspection-tests.bat ${CMAKE_CURRENT_BINARY_DIR}/introspection-tests.bat COPYONLY)
+add_test( NAME basic-introspect COMMAND introspection-tests.bat basic_introspect)
+add_test( NAME validate-xml COMMAND introspection-tests.bat valid_xml)
+add_test( NAME validate-interfaces COMMAND introspection-tests.bat validate_interfaces)
+add_test( NAME add-method-found COMMAND introspection-tests.bat add_method_under_foowhat)
+add_test( NAME first-argname-correct COMMAND introspection-tests.bat first_argname_correct)
+add_test( NAME second-argname-correct COMMAND introspection-tests.bat second_argname_correct)
+add_test( NAME signal-found COMMAND introspection-tests.bat signal_found)
+add_test( NAME multi-return COMMAND introspection-tests.bat multiple_return)
+
+#
+# Thread affinity tests - make sure that when we define what thread we want to be
+#  called from, it calls it from the correct thread
+#
+add_test( NAME affinity-signal-dispatcher-thread COMMAND test-affinity signal_dispatcher_thread)
+add_test( NAME affinity-signal-main-thread COMMAND test-affinity signal_main_thread)
+add_test( NAME affinity-message-dispatcher-thread COMMAND test-affinity message_dispatch_thread)
+add_test( NAME affinity-message-main-thread COMMAND test-affinity message_main_thread)
+add_test( NAME affinity-message-change-thread COMMAND test-affinity message_change_thread)
+
+#
 # Recursive tests - make sure that calling another DBus method inside of a current DBus method doesn't lockup
 #
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-recursive.sh
-    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-recursive.sh COPYONLY)
-add_executable( test-recursive recursive-test.cpp )
-target_link_libraries( test-recursive ${TEST_LINK} )
-target_include_directories( test-recursive PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( test-recursive PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET test-recursive PROPERTY CXX_STANDARD 17 )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/recursive.bat
+    ${CMAKE_CURRENT_BINARY_DIR}/recursive.bat COPYONLY)
+add_test( NAME recursive-method-call COMMAND recursive.bat test)
 
-add_test( NAME recursive-method-call COMMAND dbus-wrapper-recursive.sh test)
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-recursive-signal.sh
-    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-recursive-signal.sh COPYONLY)
-add_executable( test-recursive-signal recursive-signal-test.cpp )
-target_link_libraries( test-recursive-signal ${TEST_LINK} )
-target_include_directories( test-recursive-signal PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( test-recursive-signal PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET test-recursive-signal PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME recursive-from-signal COMMAND dbus-wrapper-recursive-signal.sh test)
-
-#
-# Ensure that unset environment variables don't cause problems
-#
-add_executable( test-unset-envvars unset-envvars.cpp )
-target_link_libraries( test-unset-envvars ${TEST_LINK} )
-target_include_directories( test-unset-envvars PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( test-unset-envvars PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET test-unset-envvars PROPERTY CXX_STANDARD 17 )
-
-add_test( NAME unset-session-bus COMMAND test-unset-envvars connect_session_bus )
-add_test( NAME unset-starter-bus COMMAND test-unset-envvars connect_starter_bus )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/recursive-signal.bat
+    ${CMAKE_CURRENT_BINARY_DIR}/recursive-signal.bat COPYONLY)
+add_test( NAME recursive-from-signal COMMAND recursive-signal.bat test)
 
 #
 # Property tests - test that we can get/set properties, as well as getting signals
 #
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/dbus-wrapper-property-tests.sh
-    ${CMAKE_CURRENT_BINARY_DIR}/dbus-wrapper-property-tests.sh COPYONLY)
-add_executable( test-property property-test.cpp )
-target_link_libraries( test-property ${TEST_LINK} )
-target_include_directories( test-property PUBLIC ${CMAKE_SOURCE_DIR} )
-target_include_directories( test-property PUBLIC ${CMAKE_CURRENT_BINARY_DIR} )
-set_property( TARGET test-property PROPERTY CXX_STANDARD 17 )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/property-tests.bat
+    ${CMAKE_CURRENT_BINARY_DIR}/property-tests.bat COPYONLY)
+add_test( NAME property-get-all COMMAND property-tests.bat get_all )
+add_test( NAME property-get-valid COMMAND property-tests.bat get_valid )
+add_test( NAME property-set-valid COMMAND property-tests.bat set_valid )
+add_test( NAME property-set-invalid COMMAND property-tests.bat set_invalid )
+add_test( NAME property-set-readonly COMMAND property-tests.bat set_readonly )
+add_test( NAME property-signal-emitted COMMAND property-tests.bat signal_emitted )
 
-add_test( NAME property-get-all COMMAND dbus-wrapper-property-tests.sh get_all )
-add_test( NAME property-get-valid COMMAND dbus-wrapper-property-tests.sh get_valid )
-add_test( NAME property-set-valid COMMAND dbus-wrapper-property-tests.sh set_valid )
-add_test( NAME property-set-invalid COMMAND dbus-wrapper-property-tests.sh set_invalid )
-add_test( NAME property-set-readonly COMMAND dbus-wrapper-property-tests.sh set_readonly )
-add_test( NAME property-signal-emitted COMMAND dbus-wrapper-property-tests.sh signal_emitted )
+endif( WIN32 )
