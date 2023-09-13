@@ -114,7 +114,7 @@ public:
     std::map<std::thread::id, std::weak_ptr<ThreadDispatcher>> m_threadDispatchers;
     std::shared_ptr<DBusDaemonProxy> m_daemonProxy;
     sigc::signal<void()> m_needsDispatching;
-    std::mutex m_freeProxySignalsLock;
+    std::recursive_mutex m_freeProxySignalsLock;
     std::vector<FreeSignalThreadInfo> m_freeProxySignals;
     std::mutex m_objectProxiesLock;
     std::vector<ObjectProxyThreadInfo> m_objectProxies;
@@ -708,7 +708,7 @@ void Connection::process_call_message( std::shared_ptr<const CallMessage> callms
 void Connection::process_signal_message( std::shared_ptr<const SignalMessage> msg ) {
     {
         // See if any of our free handlers can handle this
-        std::unique_lock<std::mutex> lock( m_priv->m_freeProxySignalsLock );
+        std::unique_lock<std::recursive_mutex> lock( m_priv->m_freeProxySignalsLock );
 
         for( FreeSignalThreadInfo& sigInfo : m_priv->m_freeProxySignals ) {
             if( sigInfo.handlingThread != m_priv->m_dispatchingThread ){
@@ -913,7 +913,7 @@ std::shared_ptr<SignalProxyBase> Connection::add_free_signal_proxy( std::shared_
     signalThreadinfo.handlingThread = thread_id_from_calling( calling );
 
     {
-        std::unique_lock<std::mutex> lock( m_priv->m_freeProxySignalsLock );
+        std::unique_lock<std::recursive_mutex> lock( m_priv->m_freeProxySignalsLock );
 
         m_priv->m_freeProxySignals.push_back( signalThreadinfo );
     }
@@ -955,7 +955,7 @@ bool Connection::remove_free_signal_proxy( std::shared_ptr<SignalProxyBase> sign
     bool removed = false;
 
     {
-        std::unique_lock<std::mutex> lock( m_priv->m_freeProxySignalsLock );
+        std::unique_lock<std::recursive_mutex> lock( m_priv->m_freeProxySignalsLock );
 
         std::vector<FreeSignalThreadInfo>::iterator it;
         for( it = m_priv->m_freeProxySignals.begin();
