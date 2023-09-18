@@ -13,10 +13,10 @@ class DbusCXX(ConanFile):
 
     def source(self):
         git = Git(self)
-        git.clone(url="https://github.com/strainmike/dbus-cxx.git", target=".")
+        git.clone(url="https://github.com/alynch-ni/dbus-cxx.git", target=".")
         # Please, be aware that using the head of the branch instead of an immutable tag
         # or commit is not a good practice in general
-        git.checkout("conan-windows")
+        git.checkout("deadlock_test")
 
     def requirements(self):
         self.requires("libsigcpp/3.0.7")
